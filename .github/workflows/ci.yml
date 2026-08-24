@@ -1,0 +1,86 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  sql-lint:
+    name: SQL Lint (SQLFluff)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install SQLFluff
+        run: pip install sqlfluff
+      - name: Lint SQL files
+        run: sqlfluff lint sql/ --dialect ansi
+
+  schema-validation:
+    name: Schema Migration Validation
+    runs-on: ubuntu-latest
+    services:
+      mariadb:
+        image: mariadb:11.4
+        env:
+          MYSQL_ROOT_PASSWORD: orangepi0000#
+          MYSQL_DATABASE: test
+        ports: ["3306:3306"]
+        options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=5
+      postgresql:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: orangepi0000#
+          POSTGRES_DB: test
+        ports: ["5432:5432"]
+        options: --health-cmd="pg_isready" --health-interval=10s --health-timeout=5s --health-retries=5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Apply MariaDB migrations
+        run: |
+          mysql -h 127.0.0.1 -u root -porangepi0000# test < scripts/init_mariadb.sql
+      - name: Apply PostgreSQL migrations
+        run: |
+          PGPASSWORD=orangepi0000# psql -h 127.0.0.1 -U postgres -d test -f scripts/init_postgresql.sql
+
+  benchmark:
+    name: Query Performance Benchmarks
+    runs-on: self-hosted
+    if: github.event_name == 'push'
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run benchmarks
+        run: |
+          chmod +x scripts/benchmark.sh
+          ./scripts/benchmark.sh all
+      - name: Upload results
+        uses: actions/upload-artifact@v4
+        with:
+          name: sql-benchmarks
+          path: benchmarks/
+
+  ai-review:
+    name: AI Code Review (Ollama)
+    runs-on: self-hosted
+    if: github.event_name == 'pull_request'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Get PR diff
+        run: git diff origin/${{ github.base_ref }}...HEAD > pr_diff.patch
+      - name: Run AI Review
+        run: python3 scripts/ai_review.py --diff-file pr_diff.patch --output review.md
+      - name: Comment on PR
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const review = fs.readFileSync('review.md', 'utf8');
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '## 🤖 AI SQL Review (Ollama)\n\n' + review
+            })

@@ -1,0 +1,129 @@
+version: '3.8'
+
+services:
+  mariadb:
+    image: mariadb:11.4
+    container_name: datagrip-lab-mariadb
+    environment:
+      MYSQL_ROOT_PASSWORD: orangepi0000#
+      MYSQL_DATABASE: analytics
+      MYSQL_USER: lab
+      MYSQL_PASSWORD: labpass
+    ports:
+      - "3307:3306"
+    volumes:
+      - mariadb-data:/var/lib/mysql
+      - ./scripts/init_mariadb.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - lab-network
+
+  postgresql:
+    image: postgres:16
+    container_name: datagrip-lab-postgresql
+    environment:
+      POSTGRES_PASSWORD: orangepi0000#
+      POSTGRES_DB: analytics
+      POSTGRES_USER: lab
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgresql-data:/var/lib/postgresql/data
+      - ./scripts/init_postgresql.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - lab-network
+
+  clickhouse:
+    image: clickhouse/clickhouse-server:24.3
+    container_name: datagrip-lab-clickhouse
+    environment:
+      CLICKHOUSE_DB: analytics
+      CLICKHOUSE_USER: lab
+      CLICKHOUSE_PASSWORD: labpass
+    ports:
+      - "8123:8123"
+      - "9000:9000"
+    volumes:
+      - clickhouse-data:/var/lib/clickhouse
+    networks:
+      - lab-network
+    ulimits:
+      nofile:
+        soft: 262144
+        hard: 262144
+
+  redis:
+    image: redis:7-alpine
+    container_name: datagrip-lab-redis
+    ports:
+      - "6380:6379"
+    volumes:
+      - redis-data:/data
+    networks:
+      - lab-network
+
+  ollama:
+    image: ollama/ollama:latest
+    container_name: datagrip-lab-ollama
+    ports:
+      - "11435:11434"
+    volumes:
+      - ollama-data:/root/.ollama
+    networks:
+      - lab-network
+
+  n8n:
+    image: n8nio/n8n:latest
+    container_name: datagrip-lab-n8n
+    environment:
+      N8N_BASIC_AUTH_ACTIVE: "true"
+      N8N_BASIC_AUTH_USER: admin
+      N8N_BASIC_AUTH_PASSWORD: orangepi0000#
+      N8N_HOST: localhost
+      N8N_PORT: 5679
+      WEBHOOK_URL: http://localhost:5679/
+    ports:
+      - "5679:5678"
+    volumes:
+      - n8n-data:/home/node/.n8n
+    networks:
+      - lab-network
+
+  prometheus:
+    image: prom/prometheus:v2.54.0
+    container_name: datagrip-lab-prometheus
+    ports:
+      - "9092:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus-data:/prometheus
+    networks:
+      - lab-network
+
+  grafana:
+    image: grafana/grafana:11.0.0
+    container_name: datagrip-lab-grafana
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: orangepi0000#
+    ports:
+      - "3031:3000"
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./grafana/dashboards:/etc/grafana/provisioning/dashboards
+      - ./grafana/datasources:/etc/grafana/provisioning/datasources
+    networks:
+      - lab-network
+
+volumes:
+  mariadb-data:
+  postgresql-data:
+  clickhouse-data:
+  redis-data:
+  ollama-data:
+  n8n-data:
+  prometheus-data:
+  grafana-data:
+
+networks:
+  lab-network:
+    driver: bridge
