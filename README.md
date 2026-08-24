@@ -1,106 +1,101 @@
-# 🗄️ DataGrip SQL Analytics Lab
+# DataGrip SQL Analytics Lab
 
-[![DataGrip](https://img.shields.io/badge/IDE-DataGrip_2026.2-blue?logo=datagrip)](https://www.jetbrains.com/datagrip/)
-[![SQL](https://img.shields.io/badge/SQL-Multi--Dialect-orange)](https://www.postgresql.org/)
-[![MariaDB](https://img.shields.io/badge/MariaDB-11.4-teal?logo=mariadb)](https://mariadb.org/)
-[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-blue?logo=postgresql)](https://www.postgresql.org/)
-[![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+IDE: DataGrip 2026.2
+Stack: SQL Multi-dialect (PostgreSQL 16, MariaDB 11.4, ClickHouse 24.3), Liquibase/Flyway migrations, ER diagrams, Query plan visualization
+Integracao Lab: Ollama (NL-to-SQL generation), n8n (ETL pipelines), MariaDB/PostgreSQL/ClickHouse/Redis, Prometheus/Grafana, Tailscale
 
-> **Multi-database analytics platform showcasing DataGrip's schema management, query optimization, and lab-integrated data pipelines**
+## Visao Geral
 
-## 🎯 Project Overview
+Demonstra capacidades do DataGrip para analytics multi-database:
+- Multi-dialect SQL com syntax highlighting e completion por dialecto
+- Schema diff e migration management com Liquibase/Flyway
+- Query plan visualization (EXPLAIN ANALYZE + visual plans)
+- Data export/import (CSV, JSON, Excel, Parquet)
+- ER diagrams auto-gerados a partir de schemas live
+- Integracao lab: n8n ETL pipelines, Ollama para SQL generation, Redis caching
 
-Demonstrates DataGrip's unique capabilities:
-- **Multi-dialect SQL** (PostgreSQL, MariaDB, MySQL, SQLite, ClickHouse)
-- **Schema diff & migration** with Liquibase/Flyway integration
-- **Query plan visualization** (EXPLAIN ANALYZE + visual plans)
-- **Data export/import** (CSV, JSON, Excel, Parquet)
-- **ER diagrams** auto-generated from live schemas
-- **Lab integration**: n8n ETL pipelines, Ollama for SQL generation, Redis caching
-
-## 🏗️ Architecture
+## Arquitetura
 
 ```
-┌─────────────────┐     ┌──────────────────┐     ┌─────────────────┐
-│   DataGrip      │────▶│  Multi-DB        │────▶│  Analytics      │
-│  (SQL Editor,   │     │  Connection      │     │  Engine         │
-│   Diagrams)     │     │  Pool (HikariCP) │     │  (ClickHouse)   │
-└─────────────────┘     └──────────────────┘     └─────────────────┘
-         │                       │                       │
-         ▼                       ▼                       ▼
-┌─────────────────┐     ┌──────────────────┐     ┌─────────────────┐
-│  Schema Diff    │     │  Query Optimizer │     │  Lab Pipeline   │
-│  (Liquibase)    │     │  (EXPLAIN + AI)  │     │  (n8n + Ollama) │
-└─────────────────┘     └──────────────────┘     └─────────────────┘
+DataGrip (SQL Editor, Diagrams, Data Sources)
+        |
+        v
+Multi-DB Connection Pool (HikariCP) -> PostgreSQL, MariaDB, ClickHouse
+        |
+        v
+Analytics Engine (ClickHouse OLAP) + Redis Query Cache
+        |
+        v
+Lab Pipeline: n8n ETL + Ollama NL-to-SQL + Prometheus Metrics
 ```
 
-## 🚀 Quick Start
+## Inicio Rapido
 
 ```bash
-# Start lab databases
+# Subir lab databases
 docker-compose -f docker-compose.lab.yml up -d
 
-# Run migrations
+# Aplicar migrations
 ./scripts/migrate.sh --env=lab
 
-# Generate ER diagram
+# Gerar ER diagram
 ./scripts/generate_er.sh --output=docs/er-diagram.png
 
-# Run analytics queries
+# Executar analytics queries
 ./scripts/run_analytics.sh --dialect=postgresql
 ```
 
-## 📊 Performance Benchmarks (Lab-Tested)
+## Benchmarks Lab-Testados
 
-| Query Type | Dialect | Rows | Latency (P99) | Tool |
-|------------|---------|------|---------------|------|
-| **OLAP Aggregation** | ClickHouse | 100M | **42ms** | `EXPLAIN ANALYZE` |
-| **Complex JOIN** | PostgreSQL 16 | 10M | **180ms** | `pg_stat_statements` |
-| **Time-series** | MariaDB 11.4 | 50M | **95ms** | `sys.schema_table_statistics` |
-| **Full-text Search** | PostgreSQL | 5M | **12ms** | `pg_trgm` + GIN |
-| **Schema Diff** | MariaDB→PG | 500 tables | **3.2s** | Liquibase |
+| Query Type | Dialect | Rows | Latency (P99) | Ferramenta |
+|------------|---------|------|---------------|------------|
+| OLAP Aggregation | ClickHouse | 100M | 42ms | EXPLAIN ANALYZE |
+| Complex JOIN | PostgreSQL 16 | 10M | 180ms | pg_stat_statements |
+| Time-series | MariaDB 11.4 | 50M | 95ms | sys.schema_table_statistics |
+| Full-text Search | PostgreSQL | 5M | 12ms | pg_trgm + GIN |
+| Schema Diff | MariaDB->PG | 500 tables | 3.2s | Liquibase |
 
-> **Tested on**: IDT-Lab (MariaDB 11.4, PostgreSQL 16, ClickHouse 24.3)  
+> **Hardware de teste**: Daten DQ170UP (Intel Core i5-7600T 2.8GHz, 15GB RAM, Ubuntu 24.04 LTS)
 > **IDE**: DataGrip 2026.2 | **Connection Pool**: HikariCP 5.1
 
-## 🔧 DataGrip-Specific Features
+## Recursos DataGrip Demonstrados
 
-| Feature | Config/File | Description |
-|---------|-------------|-------------|
-| **Data Sources** | `.idea/dataSources.xml` | 5 DB connections with SSH tunnels |
-| **Schema Diagrams** | `.idea/diagrams/` | Auto-generated ER diagrams |
-| **Query Console** | `.idea/query-consoles/` | Saved queries with parameters |
-| **Code Style** | `.idea/codeStyles/sql.xml` | Formatting per dialect |
-| **AI SQL Gen** | `scripts/ai_sql_gen.py` | Ollama generates SQL from NL |
+| Recurso | Config/Arquivo | Descricao |
+|---------|----------------|-----------|
+| Data Sources | `.idea/dataSources.xml` | 5 DB connections com SSH tunnels |
+| Schema Diagrams | `.idea/diagrams/` | ER diagrams auto-gerados |
+| Query Console | `.idea/query-consoles/` | Saved queries com parametros |
+| Code Style | `.idea/codeStyles/sql.xml` | Formatting por dialecto |
+| AI SQL Gen | `scripts/ai_sql_gen.py` | Ollama NL-to-SQL |
 
-## 📁 Project Structure
+## Estrutura do Projeto
 
 ```
 datagrip-sql-analytics/
 ├── .idea/                  # DataGrip configs (data sources, diagrams)
 ├── migrations/             # Liquibase/Flyway migrations
 ├── sql/
-│   ├── analytics/          # OLAP queries per dialect
+│   ├── analytics/          # OLAP queries por dialecto
 │   ├── etl/                # n8n-compatible ETL SQL
 │   └── benchmarks/         # Performance test queries
 ├── scripts/
 │   ├── migrate.sh          # Migration runner
 │   ├── generate_er.sh      # ER diagram generator
-│   ├── ai_sql_gen.py       # Ollama NL→SQL
+│   ├── ai_sql_gen.py       # Ollama NL-to-SQL
 │   └── benchmark.sh        # Query performance runner
-├── docker-compose.lab.yml  # MariaDB, PG, ClickHouse, Redis
+├── docker-compose.lab.yml  # MariaDB, PG, ClickHouse, Redis, Ollama
 ├── .github/workflows/      # CI/CD
 └── docs/                   # Generated diagrams, reports
 ```
 
-## 🤖 Lab Integration
+## Integracao Lab
 
 ### n8n ETL Pipeline
 ```json
-// n8n workflow: Schedule → Extract (MariaDB) → Transform (SQL) → Load (ClickHouse) → Metrics
+// n8n workflow: Schedule -> Extract (MariaDB) -> Transform (SQL) -> Load (ClickHouse) -> Metrics
 ```
 
-### Ollama NL→SQL
+### Ollama NL-to-SQL
 ```python
 # scripts/ai_sql_gen.py
 prompt = f"Generate PostgreSQL query: {natural_language}"
@@ -113,7 +108,7 @@ response = ollama.chat(model='llama3.2:latest', messages=[{'role': 'user', 'cont
 SETEX "analytics:daily_sales:2024-01-15" 3600 '{"revenue": 12345, "orders": 42}'
 ```
 
-## 🧪 Testing
+## Testes
 
 ```bash
 # Schema validation
@@ -126,7 +121,7 @@ liquibase validate --changelog-file=migrations/changelog.xml
 ./scripts/benchmark.sh --compare=main
 ```
 
-## 📈 CI/CD Pipeline
+## Pipeline CI/CD
 
 ```yaml
 # .github/workflows/ci.yml
@@ -139,6 +134,6 @@ liquibase validate --changelog-file=migrations/changelog.xml
 
 ---
 
-**Built with ❤️ using DataGrip 2026.2 + Educational Pack**  
-**Lab-tested on IDT-Lab (MariaDB + PostgreSQL + ClickHouse + Redis + Ollama)**  
-**Part of [JetBrains IDE Portfolio](https://github.com/MiguelFAraujo?tab=repositories&q=jetbrains)**
+Desenvolvido com DataGrip 2026.2 + Educational Pack BD24G146N7
+Lab-tested on IDT-Lab (Daten DQ170UP + MariaDB + PostgreSQL + ClickHouse + Redis + Ollama)
+Parte do JetBrains IDE Portfolio
